@@ -1,20 +1,69 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-	<title>Cards</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="dynamicCards — create and delete simple cards in the browser.">
+	<title>dynamicCards</title>
+
+	<!--
+		Content Security Policy, enforced for the whole document.
+
+		The app needs nothing but its own stylesheet and its own ES module, so the
+		default is 'none' and only the minimum is re-allowed. The practical effect
+		is that a card name containing markup cannot execute, and even a future
+		injection cannot load remote code or exfiltrate data to another origin
+		(connect-src 'none', form-action 'self'). Scripts must be files served from
+		this origin: no inline handlers, no eval, no third-party origins.
+	-->
+	<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'self'; base-uri 'none'; object-src 'none'">
+	<meta name="referrer" content="no-referrer">
+
+	<link rel="stylesheet" type="text/css" href="main.css">
 </head>
-<link rel="stylesheet" type="text/css" href="main.css">
 <body>
-	<div class="inputInfo">
-		<div>
-			<input id="newCardName" type="text" name="new Card Name">
-			<button  id="createCard" type="button">Create</button> 
-		</div>
-	</div>
-	<div id="addTheDamnCard">
+	<main class="page">
+		<h1 class="page__title">dynamicCards</h1>
 
-	</div>
+		<!--
+			A real <form> rather than a click handler on a bare button: it restores
+			submit-on-Enter, focus behaviour and correct semantics for assistive
+			technology. The submit handler in src/app.js calls preventDefault.
+		-->
+		<form id="cardForm" class="card-form" autocomplete="off">
+			<label class="card-form__label" for="newCardName">New card name</label>
+			<div class="card-form__row">
+				<input
+					id="newCardName"
+					class="card-form__input"
+					type="text"
+					name="cardName"
+					aria-describedby="cardFormStatus"
+					required>
+				<button id="createCard" class="card-form__submit" type="submit">Create</button>
+			</div>
+			<!--
+				role="status" announces polite, non-interrupting updates; the
+				error state is conveyed with a class plus text, never colour alone.
+			-->
+			<p id="cardFormStatus" class="status" role="status" aria-live="polite"></p>
+		</form>
 
-<script type="text/javascript" src="main.js"></script>
+		<!--
+			A real <ul>/<li> list rather than a div, so screen readers announce how
+			many cards there are and can navigate between them.
+		-->
+		<ul id="addTheDamnCard" class="card-list" aria-label="Cards"></ul>
+
+		<noscript>
+			<p class="status status--error">This page needs JavaScript enabled to create and delete cards.</p>
+		</noscript>
+	</main>
+
+	<!--
+		type="module" is implicitly deferred, so the module graph is evaluated after
+		the document is parsed and every element above already exists.
+	-->
+	<script type="module" src="src/main.js"></script>
 </body>
 </html>
