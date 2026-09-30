@@ -1,0 +1,40 @@
+{
+  "name": "dynamiccards",
+  "version": "2.0.0",
+  "description": "Create and delete cards in the browser. A zero-dependency ES-module app with a zero-dependency test suite.",
+  "keywords": [
+    "cards",
+    "dom",
+    "es-modules",
+    "vanilla-js",
+    "zero-dependencies"
+  ],
+  "homepage": "https://github.com/PreCogSecurity/dynamicCards#readme",
+  "bugs": {
+    "url": "https://github.com/PreCogSecurity/dynamicCards/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PreCogSecurity/dynamicCards.git"
+  },
+  "license": "MIT",
+  "author": "PreCog Security",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "start": "node tools/serve.js",
+    "test": "node --test \"test/*.test.js\"",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "check": "npm run lint && npm test",
+    "audit": "npm audit --audit-level=high"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.11.0",
+    "globals": "^17.12.0"
+  }
+}

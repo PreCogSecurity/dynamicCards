@@ -1,16 +1,86 @@
 name: CI
+
 on:
   push:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+
+# Least privilege: the workflow only ever needs to read the repository.
+permissions:
+  contents: read
+
+# A new push to the same branch supersedes the run in progress.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
 jobs:
-  test:
+  check:
+    name: Lint and test (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        # The floor from package.json engines, plus the current LTS and current
+        # release, so an accidental use of a newer API is caught on the floor.
+        node: ['22.13.0', 'lts/*', '24']
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
-          cache: 'npm'
-      - run: npm ci
-      - run: npm test
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      # Reproducible install: package-lock.json is committed, and `npm ci` fails
+      # rather than silently resolving something different from what was reviewed.
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Verify the application still starts
+        run: |
+          node tools/serve.js --port 8080 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for _ in $(seq 1 30); do
+            if curl --silent --fail --output /dev/null http://127.0.0.1:8080/; then
+              echo "application served index.html successfully"
+              exit 0
+            fi
+            sleep 0.5
+          done
+          echo "application did not become ready" >&2
+          exit 1
+
+  dependency-audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      # Fails the build on any high or critical advisory in the dependency tree.
+      - name: Audit
+        run: npm audit --audit-level=high
